@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Three.js IsoSphere Plane Demo</title>
+    <style>
+      body {
+        margin: 0;
+      }
+      canvas {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.145.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/controls/OrbitControls.js"></script>
+    <script>
+      // Scene setup
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0xffffff);
+
+      // Camera setup
+      const camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+      const controls = new THREE.OrbitControls(camera, document.body);
+
+      // Lighting
+      const sun = new THREE.DirectionalLight(0xffffff, 1);
+      sun.position.set(5, 5, 5);
+      scene.add(sun);
+      scene.add(new THREE.AmbientLight(0x222222));
+
+      // Plane of isospheres
+      const isoSize = 0.25; // Reduced sphere size
+      const planeSize = 40;
+      const isos = [];
+      for (let x = -planeSize / 2; x < planeSize / 2; x += 1) {
+        for (let z = -planeSize / 2; z < planeSize / 2; z += 1) {
+          const iso = new THREE.Mesh(
+            new THREE.IcosahedronGeometry(isoSize, 2),
+            new THREE.MeshPhongMaterial({
+              color: 0xcccccc,
+              specular: 0x111111,
+              shininess: 10,
+            })
+          );
+          iso.position.set(x, 0, z);
+          scene.add(iso);
+          isos.push(iso);
+        }
+      }
+
+      // Camera positioning
+      camera.position.set(planeSize / 2, 10, 0);
+      camera.lookAt(0, 0, 0);
+
+      // Gerstner wave functions
+      const waveParams = [
+        {
+          wavelength: 10,
+          amplitude: 1,
+          speed: 0.5,
+          direction: new THREE.Vector2(1, 1).normalize(),
+        },
+        {
+          wavelength: 15,
+          amplitude: 0.5,
+          speed: 0.3,
+          direction: new THREE.Vector2(-1, 1).normalize(),
+        },
+        {
+          wavelength: 20,
+          amplitude: 0.2,
+          speed: 0.1,
+          direction: new THREE.Vector2(1, -1).normalize(),
+        },
+      ];
+
+      // Animation loop
+      function animate() {
+        requestAnimationFrame(animate);
+        const time = performance.now() / 200;
+        for (const iso of isos) {
+          const x = iso.position.x;
+          const z = iso.position.z;
+          let yOffset = 0;
+          for (const wave of waveParams) {
+            const waveX = x * wave.direction.x + z * wave.direction.y;
+            const waveTime =
+              time * wave.speed + (waveX / wave.wavelength) * Math.PI * 2;
+            yOffset += Math.sin(waveTime) * wave.amplitude;
+          }
+          iso.position.y = yOffset;
+        }
+        controls.update();
+        renderer.render(scene, camera);
+      }
+
+      // Renderer
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+
+      animate();
+    </script>
+  </body>
+</html>

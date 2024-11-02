@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Three.js Heightmap Layers</title>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+      }
+    </style>
+    <script src="https://unpkg.com/three@0.152.2/build/three.min.js"></script>
+    <script src="https://unpkg.com/dat.gui@0.7.9/build/dat.gui.min.js"></script>
+    <script src="https://unpkg.com/noisejs@2.1.0"></script>
+  </head>
+  <body>
+    <script>
+      // Set up scene, camera, and renderer
+      const scene = new THREE.Scene();
+      const aspectRatio = window.innerWidth / window.innerHeight;
+      const viewSize = 80;
+      const camera = new THREE.OrthographicCamera(
+        -viewSize * aspectRatio,
+        viewSize * aspectRatio,
+        viewSize,
+        -viewSize,
+        0.01,
+        1000
+      );
+      camera.position.set(200, 200, 200);
+      camera.lookAt(0, 40, 0);
+
+      const renderer = new THREE.WebGLRenderer({antialias: true});
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      window.addEventListener('resize', onWindowResize, false);
+
+      function onWindowResize() {
+        const aspectRatio = window.innerWidth / window.innerHeight;
+        camera.left = -viewSize * aspectRatio;
+        camera.right = viewSize * aspectRatio;
+        camera.top = viewSize;
+        camera.bottom = -viewSize;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      }
+      document.body.appendChild(renderer.domElement);
+
+      // Create Perlin noise instance
+      const noise = new Noise(Math.random());
+
+      // Parameters
+      const gridSize = 40;
+      const pointSpacing = 2;
+      let xOffset = 0.0;
+      let yOffset = 0.0;
+      let layerSeparation = 30.0;
+      let heightScaling = 30.0;
+
+      // GUI controls
+      const gui = new dat.GUI();
+      const params = {
+        layerSeparation: 30.0,
+        xOffset: 0.0,
+        yOffset: 0.0,
+        heightScaling: 30.0,
+      };
+      gui
+        .add(params, 'layerSeparation', 0, 50)
+        .onChange((value) => (layerSeparation = value));
+      gui
+        .add(params, 'xOffset', -100, 100)
+        .step(0.1)
+        .onChange((value) => (xOffset = value));
+      gui
+        .add(params, 'yOffset', -100, 100)
+        .step(0.1)
+        .onChange((value) => (yOffset = value));
+      gui
+        .add(params, 'heightScaling', 5, 50)
+        .step(0.1)
+        .onChange((value) => (heightScaling = value));
+
+      // Heightmap data
+      const heightmap = new Float32Array(gridSize * gridSize);
+
+      // Create layers
+      const positions = new Float32Array((gridSize - 1) * (gridSize - 1) * 18);
+      const colors = new Float32Array((gridSize - 1) * (gridSize - 1) * 18);
+      const gridPositions = new Float32Array(
+        (gridSize - 1) * (gridSize - 1) * 12
+      );
+
+      const heatmapGeometry = new THREE.BufferGeometry();
+      heatmapGeometry.setAttribute(
+        'position',
+        new THREE.BufferAttribute(positions, 3)
+      );
+      heatmapGeometry.setAttribute(
+        'color',
+        new THREE.BufferAttribute(colors, 3)
+      );
+      const heatmapMaterial = new THREE.MeshBasicMaterial({
+        vertexColors: true,
+        side: THREE.DoubleSide,
+      });
+      const heatmapMesh = new THREE.Mesh(heatmapGeometry, heatmapMaterial);
+      //   heatmapMesh.position.z = -10;
+      scene.add(heatmapMesh);
+
+      const gridGeometry = new THREE.BufferGeometry();
+      gridGeometry.setAttribute(
+        'position',
+        new THREE.BufferAttribute(gridPositions, 3)
+      );
+      const gridMaterial = new THREE.LineBasicMaterial({color: 0xffffff});
+      const gridLines = new THREE.LineSegments(gridGeometry, gridMaterial);
+      //   gridLines.position.z = -10;
+      scene.add(gridLines);
+
+      const heightLines = [];
+      const spheres = [];
+
+      for (let i = 0; i < gridSize * gridSize; i++) {
+        const lineMaterial = new THREE.LineBasicMaterial({color: 0xffffff});
+        const lineGeometry = new THREE.BufferGeometry();
+        lineGeometry.setAttribute(
+          'position',
+          new THREE.Float32BufferAttribute([0, 0, 0, 0, 0, 0], 3)
+        );
+        const line = new THREE.Line(lineGeometry, lineMaterial);
+        heightLines.push(line);
+        // line.position.z = -10;
+        scene.add(line);
+
+        const sphereGeometry = new THREE.SphereGeometry(0.5, 8, 8);
+        const sphereMaterial = new THREE.MeshBasicMaterial({color: 0xffffff});
+        const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        spheres.push(sphere);
+        // sphere.position.z = -10;
+        scene.add(sphere);
+      }
+
+      // Generate heightmap data
+      function updateHeightmapData() {
+        for (let i = 0; i < gridSize; i++) {
+          for (let j = 0; j < gridSize; j++) {
+            const index = i * gridSize + j;
+            heightmap[index] =
+              (noise.perlin2((i + xOffset) / 20, (j + yOffset) / 20) + 1) *
+              (heightScaling / 2);
+          }
+        }
+      }
+
+      function clamp(value, min, max) {
+        return Math.min(Math.max(value, min), max);
+      }
+
+      const BLUE = new THREE.Color(0x0000ff);
+      const YELLOW = new THREE.Color(0xffff00);
+      const RED = new THREE.Color(0xff0000);
+
+      // Function to interpolate color from normalized height
+      function getColorFromHeight(height) {
+        // interpolate color between blue, yellow and red
+        const colorA = height < 0.5 ? BLUE : YELLOW;
+        const colorB = height < 0.5 ? YELLOW : RED;
+        const t = height < 0.5 ? height * 2 : (height - 0.5) * 2;
+        return colorA.clone().lerpHSL(colorB, t);
+      }
+
+      // Update geometries
+      function updateGeometries() {
+        let posIndex = 0;
+        let colorIndex = 0;
+        let gridPosIndex = 0;
+        const heightRange = heightScaling;
+
+        for (let i = 0; i < gridSize - 1; i++) {
+          for (let j = 0; j < gridSize - 1; j++) {
+            const x1 = i * pointSpacing;
+            const y1 = j * pointSpacing;
+            const x2 = (i + 1) * pointSpacing;
+            const y2 = (j + 1) * pointSpacing;
+
+            const h1 = heightmap[i * gridSize + j];
+            const h2 = heightmap[(i + 1) * gridSize + j];
+            const h3 = heightmap[i * gridSize + (j + 1)];
+            const h4 = heightmap[(i + 1) * gridSize + (j + 1)];
+
+            // Heatmap layer (triangles)
+            positions.set([x1, h1, y1, x2, h2, y1, x1, h3, y2], posIndex);
+            positions.set([x2, h2, y1, x2, h4, y2, x1, h3, y2], posIndex + 9);
+
+            const color1 = getColorFromHeight(h1 / heightRange);
+            const color2 = getColorFromHeight(h2 / heightRange);
+            const color3 = getColorFromHeight(h3 / heightRange);
+            const color4 = getColorFromHeight(h4 / heightRange);
+
+            colors.set(
+              [
+                color1.r,
+                color1.g,
+                color1.b,
+                color2.r,
+                color2.g,
+                color2.b,
+                color3.r,
+                color3.g,
+                color3.b,
+              ],
+              colorIndex
+            );
+            colors.set(
+              [
+                color2.r,
+                color2.g,
+                color2.b,
+                color4.r,
+                color4.g,
+                color4.b,
+                color3.r,
+                color3.g,
+                color3.b,
+              ],
+              colorIndex + 9
+            );
+
+            posIndex += 18;
+            colorIndex += 18;
+
+            // Grid layer
+            gridPositions.set(
+              [x1, h1, y1, x2, h2, y1, x1, h1, y1, x1, h3, y2],
+              gridPosIndex
+            );
+            gridPosIndex += 12;
+          }
+        }
+
+        heatmapGeometry.attributes.position.needsUpdate = true;
+        heatmapGeometry.attributes.color.needsUpdate = true;
+        gridGeometry.attributes.position.needsUpdate = true;
+
+        // Height layer
+        for (let i = 0; i < gridSize; i++) {
+          for (let j = 0; j < gridSize; j++) {
+            const index = i * gridSize + j;
+            const x = i * pointSpacing;
+            const y = j * pointSpacing;
+            const height = heightmap[index];
+
+            const line = heightLines[index];
+            const linePositions = line.geometry.attributes.position.array;
+            linePositions[0] = x;
+            linePositions[1] = 0;
+            linePositions[2] = y;
+            linePositions[3] = x;
+            linePositions[4] = height;
+            linePositions[5] = y;
+            line.geometry.attributes.position.needsUpdate = true;
+
+            const sphere = spheres[index];
+            sphere.position.set(x, height, y);
+          }
+        }
+
+        heatmapMesh.position.y = layerSeparation;
+        gridLines.position.y = layerSeparation * 2;
+        heightLines.forEach((line) => (line.position.y = layerSeparation * 3));
+        spheres.forEach((sphere) => (sphere.position.y += layerSeparation * 3));
+      }
+
+      // Animation loop
+      function animate() {
+        requestAnimationFrame(animate);
+        updateHeightmapData();
+        updateGeometries();
+        renderer.render(scene, camera);
+      }
+
+      animate();
+    </script>
+  </body>
+</html>

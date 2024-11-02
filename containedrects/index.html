@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>contained</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: sans-serif;
+      }
+      .root {
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        contain: strict;
+      }
+      .rect {
+        position: absolute;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="root"></div>
+    <script>
+      let elems = [];
+      const gridSquareSize = 20;
+      const rowLength = window.innerWidth / gridSquareSize;
+      for (let i = 0; i < 3000; i++) {
+        const div = document.createElement("div");
+        // div.textContent = i;
+        div.className = "rect";
+        div.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+        elems.push({
+          div,
+          x: window.innerWidth * Math.random(),
+          y: window.innerHeight * Math.random(),
+          width: gridSquareSize,
+          height: gridSquareSize,
+        });
+        document.querySelector(".root").appendChild(div);
+      }
+
+      // anim loop
+      function anim(now) {
+        const nowSec = now / 1000;
+        for (let i = 0; i < elems.length; i++) {
+          const elem = elems[i];
+          elem.x += (Math.random() * 2 - 1) * 4;
+          elem.y += (Math.random() * 2 - 1) * 4;
+          elem.width = Math.max(10, Math.random() * 2 - 1 + elem.width);
+          elem.height = Math.max(10, Math.random() * 2 - 1 + elem.height);
+
+          elem.div.style.transform = `translateX(${elem.x}px) translateY(${elem.y}px)`;
+          elem.div.style.width = `${elem.width}px`;
+          elem.div.style.height = `${elem.height}px`;
+        }
+        requestAnimationFrame(anim);
+      }
+      anim(performance.now());
+    </script>
+  </body>
+</html>
