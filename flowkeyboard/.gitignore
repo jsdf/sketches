@@ -1,0 +1,6 @@
+FlowClone.xcodeproj/
+*.xcworkspace/
+.build/
+DerivedData/
+Support/*.plist
+Support/*.entitlements

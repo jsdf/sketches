@@ -1,0 +1,84 @@
+name: FlowClone
+options:
+  bundleIdPrefix: com.example.flowclone
+  deploymentTarget:
+    iOS: "26.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+settings:
+  base:
+    # Swift 5 language mode: the concurrency model here is sound, but Swift 6 mode
+    # turns every inference disagreement into a hard error. Flip to 6.0 once it builds.
+    SWIFT_VERSION: "5.0"
+    DEVELOPMENT_TEAM: "" # <- set your team ID, or set it in Xcode's Signing & Capabilities
+    CODE_SIGN_STYLE: Automatic
+    SWIFT_STRICT_CONCURRENCY: minimal
+    TARGETED_DEVICE_FAMILY: "1,2"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+
+targets:
+  FlowClone:
+    type: application
+    platform: iOS
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.flowclone
+    sources:
+      - path: App
+      - path: Shared
+    info:
+      path: Support/App-Info.plist
+      properties:
+        CFBundleDisplayName: Flow
+        UILaunchScreen: {}
+        UIBackgroundModes: [audio]
+        NSMicrophoneUsageDescription: Flow needs the microphone so you can dictate into any app from the Flow keyboard.
+        NSSpeechRecognitionUsageDescription: Flow transcribes your speech on device to turn it into text.
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        CFBundleURLTypes:
+          - CFBundleURLName: com.example.flowclone
+            CFBundleURLSchemes: [flowclone]
+    entitlements:
+      path: Support/FlowClone.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.example.flowclone
+    dependencies:
+      - target: FlowKeyboard
+    scheme:
+      testTargets: []
+
+  FlowKeyboard:
+    type: app-extension
+    platform: iOS
+    settings:
+      base:
+        # Must be nested under the containing app's identifier or the build is rejected.
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.flowclone.keyboard
+    sources:
+      - path: Keyboard
+      - path: Shared
+    info:
+      path: Support/Keyboard-Info.plist
+      properties:
+        CFBundleDisplayName: Flow
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.keyboard-service
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).KeyboardViewController
+          NSExtensionAttributes:
+            IsASCIICapable: true
+            PrefersRightToLeft: false
+            PrimaryLanguage: en-US
+            # Full Access is required for the App Group (the shared container the
+            # keyboard uses to talk to the host app). Without it, dictation cannot work.
+            RequestsOpenAccess: true
+    entitlements:
+      path: Support/FlowKeyboard.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.example.flowclone
