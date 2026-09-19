@@ -6,6 +6,9 @@ const directoryPath = './'; // Set your directory path here
 
 const outputFilePath = path.join(directoryPath, 'index.html');
 
+// Directories that hold generated or vendored HTML, not sketches.
+const IGNORED_DIRS = new Set(['node_modules', '.git', '.expo', 'dist', 'web-build', 'ios', 'android']);
+
 // Helper function to get all HTML files with their creation dates
 function getHtmlFiles(dir) {
   let results = [];
@@ -16,6 +19,9 @@ function getHtmlFiles(dir) {
       return;
     }
     if (file.isDirectory()) {
+      if (IGNORED_DIRS.has(file.name)) {
+        return;
+      }
       results = results.concat(getHtmlFiles(filePath));
     } else if (file.isFile() && file.name.endsWith('.html')) {
       const stats = fs.statSync(filePath);
