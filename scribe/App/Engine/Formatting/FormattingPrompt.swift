@@ -7,7 +7,7 @@ enum FormattingPrompt {
     /// register and whether we're mid-sentence; not enough to blow the context window.
     private static let contextBudget = 400
 
-    static func insertInstructions(settings: FlowSettings, context: DictationContext) -> String {
+    static func insertInstructions(settings: ScribeSettings, context: DictationContext) -> String {
         var lines: [String] = [
             "You clean up dictated speech so it reads like the user typed it.",
             "You are a transcription post-processor, not an assistant.",
@@ -68,7 +68,7 @@ enum FormattingPrompt {
         return parts.joined(separator: "\n\n")
     }
 
-    static func editInstructions(settings: FlowSettings) -> String {
+    static func editInstructions(settings: ScribeSettings) -> String {
         """
         You edit text according to a spoken instruction.
 

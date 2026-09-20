@@ -13,7 +13,7 @@ final class KeyboardModel {
         case checking
         case ready
         case needsFullAccess
-        case needsHostApp      // host isn't running; user must open Flow
+        case needsHostApp      // host isn't running; user must open Scribe
     }
 
     private(set) var availability: Availability = .checking
@@ -23,7 +23,7 @@ final class KeyboardModel {
     private(set) var levels: [Float] = []
     private(set) var errorMessage: String?
 
-    var settings: FlowSettings = FlowSettingsStore.load()
+    var settings: ScribeSettings = ScribeSettingsStore.load()
 
     /// Called when a finished dictation is ready to be typed into the field.
     var onInsert: ((String) -> Void)?
@@ -44,7 +44,7 @@ final class KeyboardModel {
     }
 
     init() {
-        let bus = FlowSignalBus.shared
+        let bus = ScribeSignalBus.shared
         tokens.append(bus.observe(.hostStateDidChange) { [weak self] in
             Task { @MainActor in self?.readState() }
         })
@@ -58,7 +58,7 @@ final class KeyboardModel {
     }
 
     deinit {
-        let bus = FlowSignalBus.shared
+        let bus = ScribeSignalBus.shared
         for token in tokens { bus.removeObserver(token) }
     }
 
@@ -66,7 +66,7 @@ final class KeyboardModel {
 
     func keyboardDidAppear(hasFullAccess: Bool) {
         self.hasFullAccess = hasFullAccess
-        settings = FlowSettingsStore.load()
+        settings = ScribeSettingsStore.load()
 
         guard hasFullAccess else {
             availability = .needsFullAccess
@@ -75,7 +75,7 @@ final class KeyboardModel {
 
         availability = .checking
         readState()
-        FlowSignalBus.shared.post(.keyboardDidAppear)
+        ScribeSignalBus.shared.post(.keyboardDidAppear)
 
         // A Darwin notification can't wake a suspended process, so silence here means
         // the host app isn't resident and the user has to open it.
@@ -111,18 +111,18 @@ final class KeyboardModel {
         volatileTranscript = ""
         errorMessage = nil
         phase = .preparing
-        FlowStore.writeRequest(request)
-        FlowSignalBus.shared.post(.startDictation)
+        ScribeStore.writeRequest(request)
+        ScribeSignalBus.shared.post(.startDictation)
     }
 
     func stop() {
         guard isDictating else { return }
         phase = .formatting
-        FlowSignalBus.shared.post(.stopDictation)
+        ScribeSignalBus.shared.post(.stopDictation)
     }
 
     func cancel() {
-        FlowSignalBus.shared.post(.cancelDictation)
+        ScribeSignalBus.shared.post(.cancelDictation)
         activeRequest = nil
         phase = .idle
         transcript = ""
@@ -132,7 +132,7 @@ final class KeyboardModel {
     // MARK: - Host state
 
     private func readState() {
-        let state = FlowStore.readState()
+        let state = ScribeStore.readState()
 
         // Ignore updates belonging to a dictation we're no longer running.
         if let active = activeRequest, let incoming = state.requestID, incoming != active.id {

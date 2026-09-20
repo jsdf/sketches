@@ -9,16 +9,16 @@ import UIKit
 ///
 ///   keyboard taps mic
 ///     -> writes DictationRequest to the shared container, posts `.startDictation`
-///     -> FlowHost starts capture + transcription, publishes HostState on every update
+///     -> ScribeHost starts capture + transcription, publishes HostState on every update
 ///     -> keyboard renders partial text and the waveform
 ///   keyboard taps stop
 ///     -> posts `.stopDictation`
-///     -> FlowHost finalises the transcript, runs the formatting pass,
+///     -> ScribeHost finalises the transcript, runs the formatting pass,
 ///        publishes `.finished` with `formattedText`
 ///     -> keyboard inserts it via textDocumentProxy and returns to idle
 @MainActor
 @Observable
-final class FlowHost {
+final class ScribeHost {
     enum SessionState: Equatable {
         case stopped
         case ready          // audio session held, listening for keyboard signals
@@ -34,10 +34,10 @@ final class FlowHost {
     /// Completed dictations this launch, newest first. Never leaves the device.
     private(set) var history: [String] = []
 
-    var settings: FlowSettings = FlowSettingsStore.load() {
+    var settings: ScribeSettings = ScribeSettingsStore.load() {
         didSet {
             guard settings != oldValue else { return }
-            FlowSettingsStore.save(settings)
+            ScribeSettingsStore.save(settings)
             if settings.backend != oldValue.backend || settings.localeIdentifier != oldValue.localeIdentifier {
                 engine = nil
             }
@@ -57,12 +57,12 @@ final class FlowHost {
         observeKeyboard()
     }
 
-    // MARK: - Flow session
+    // MARK: - Scribe session
 
-    /// Starts a "Flow session": holds the audio session so the app stays resident and
+    /// Starts a "Scribe session": holds the audio session so the app stays resident and
     /// can respond to the keyboard after the user switches away. This is the bit the
     /// user consents to, and the reason the orange mic indicator stays lit.
-    func startFlowSession() async {
+    func startSession() async {
         guard sessionState == .stopped else { return }
 
         guard await AudioCapture.requestPermission() else {
@@ -80,14 +80,14 @@ final class FlowHost {
         sessionState = .ready
         lastError = nil
         publish(.idle)
-        FlowSignalBus.shared.post(.hostDidBecomeReady)
+        ScribeSignalBus.shared.post(.hostDidBecomeReady)
 
         // Warm both models so the first dictation isn't the slow one.
         Task.detached { FoundationModelsFormatter.prewarm() }
         Task { await prepareEngine() }
     }
 
-    func endFlowSession() async {
+    func endSession() async {
         await cancelDictation()
         await capture.stop()
         await capture.deactivateSession()
@@ -125,7 +125,7 @@ final class FlowHost {
     // MARK: - Keyboard signals
 
     private func observeKeyboard() {
-        let bus = FlowSignalBus.shared
+        let bus = ScribeSignalBus.shared
         observerTokens.append(bus.observe(.startDictation) { [weak self] in
             Task { @MainActor in await self?.beginDictation() }
         })
@@ -138,7 +138,7 @@ final class FlowHost {
         observerTokens.append(bus.observe(.keyboardDidAppear) { [weak self] in
             Task { @MainActor in
                 guard let self, self.sessionState != .stopped else { return }
-                FlowSignalBus.shared.post(.hostDidBecomeReady)
+                ScribeSignalBus.shared.post(.hostDidBecomeReady)
                 await self.prepareEngine()
             }
         })
@@ -148,7 +148,7 @@ final class FlowHost {
 
     private func beginDictation() async {
         guard sessionState == .ready else { return }
-        guard let request = FlowStore.readRequest() else { return }
+        guard let request = ScribeStore.readRequest() else { return }
         guard request.id != currentRequest?.id else { return }
 
         currentRequest = request
@@ -231,7 +231,7 @@ final class FlowHost {
             formatted = try await formatter.format(transcript: raw, request: request, settings: settings)
         } catch {
             // Never lose the user's words to a formatting failure.
-            NSLog("[Flow] formatting failed, inserting raw transcript: \(error)")
+            NSLog("[Scribe] formatting failed, inserting raw transcript: \(error)")
             formatted = raw
         }
 
@@ -277,8 +277,8 @@ final class FlowHost {
                 levels: levels,
                 errorMessage: phase == .failed ? lastError : nil
             )
-            FlowStore.writeState(state)
-            FlowSignalBus.shared.post(.hostStateDidChange)
+            ScribeStore.writeState(state)
+            ScribeSignalBus.shared.post(.hostStateDidChange)
         }
     }
 }

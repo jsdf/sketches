@@ -10,7 +10,7 @@ import UIKit
 final class KeyboardViewController: UIInputViewController {
 
     private let model = KeyboardModel()
-    private var hostingController: UIHostingController<FlowKeyboardView>?
+    private var hostingController: UIHostingController<ScribeKeyboardView>?
     private var heightConstraint: NSLayoutConstraint?
 
     private var keyboardHeight: CGFloat {
@@ -27,7 +27,7 @@ final class KeyboardViewController: UIInputViewController {
             self?.captureContext() ?? DictationContext()
         }
 
-        let root = FlowKeyboardView(
+        let root = ScribeKeyboardView(
             model: model,
             needsInputModeSwitchKey: needsInputModeSwitchKey,
             onKey: { [weak self] key in self?.handle(key) },
@@ -148,10 +148,10 @@ final class KeyboardViewController: UIInputViewController {
     /// chain looking for something that implements `openURL:`.
     ///
     /// This is undocumented and Apple has narrowed it before; treat a `false` return as
-    /// normal and tell the user to open Flow themselves.
+    /// normal and tell the user to open Scribe themselves.
     @discardableResult
     private func openHostApp() -> Bool {
-        guard let url = URL(string: "\(FlowGroup.urlScheme)://start") else { return false }
+        guard let url = URL(string: "\(ScribeGroup.urlScheme)://start") else { return false }
         var responder: UIResponder? = self
         let selector = sel_registerName("openURL:")
         while let current = responder {

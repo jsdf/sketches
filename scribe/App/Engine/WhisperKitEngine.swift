@@ -13,7 +13,7 @@ import WhisperKit
 ///         url: https://github.com/argmaxinc/WhisperKit
 ///         from: "0.9.0"
 ///
-/// and listing `- package: WhisperKit` under the FlowClone target's dependencies.
+/// and listing `- package: WhisperKit` under the Scribe target's dependencies.
 /// The whole file compiles away when the package isn't linked.
 ///
 /// Trade-off versus `AppleSpeechEngine`: this runs on any device (no Apple

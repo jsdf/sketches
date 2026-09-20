@@ -7,7 +7,7 @@ enum KeyboardKey: Equatable {
     case newline
 }
 
-/// A plain letter keyboard, so Flow is still usable as a keyboard when you don't feel
+/// A plain letter keyboard, so Scribe is still usable as a keyboard when you don't feel
 /// like talking. Nothing clever — it exists so the mic isn't the only way to type.
 struct QwertyView: View {
     let needsInputModeSwitchKey: Bool

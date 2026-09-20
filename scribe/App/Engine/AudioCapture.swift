@@ -16,7 +16,7 @@ actor AudioCapture {
 
         var errorDescription: String? {
             switch self {
-            case .permissionDenied: "Microphone access was denied. Enable it in Settings > Flow."
+            case .permissionDenied: "Microphone access was denied. Enable it in Settings > Scribe."
             case .engineFailed(let e): "Could not start the microphone: \(e.localizedDescription)"
             }
         }
@@ -38,7 +38,7 @@ actor AudioCapture {
         }
     }
 
-    /// Activates the audio session and keeps it active for the lifetime of a Flow
+    /// Activates the audio session and keeps it active for the lifetime of a Scribe
     /// session, so the app is not suspended between dictations.
     func activateSession() throws {
         let session = AVAudioSession.sharedInstance()

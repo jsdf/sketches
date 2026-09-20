@@ -9,7 +9,7 @@ public protocol TextFormatter: Sendable {
     func format(
         transcript: String,
         request: DictationRequest,
-        settings: FlowSettings
+        settings: ScribeSettings
     ) async throws -> String
 }
 
@@ -17,7 +17,7 @@ public enum FormatterFactory {
     /// Prefers the on-device LLM, falls back to rules when Apple Intelligence is
     /// unavailable (older device, feature switched off, model still downloading) or
     /// when the user has turned model formatting off.
-    public static func make(settings: FlowSettings) -> any TextFormatter {
+    public static func make(settings: ScribeSettings) -> any TextFormatter {
         guard settings.useModelFormatting, FoundationModelsFormatter.isAvailable else {
             return RuleBasedFormatter()
         }

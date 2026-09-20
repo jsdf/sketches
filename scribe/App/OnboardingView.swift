@@ -4,13 +4,13 @@ import UIKit
 struct OnboardingView: View {
     private let steps: [(String, String, String)] = [
         ("keyboard.badge.ellipsis", "Add the keyboard",
-         "Settings > General > Keyboard > Keyboards > Add New Keyboard, then choose Flow."),
+         "Settings > General > Keyboard > Keyboards > Add New Keyboard, then choose Scribe."),
         ("lock.open", "Allow Full Access",
-         "Tap Flow in that same list and turn on Allow Full Access. The keyboard needs it to reach the shared container it uses to talk to this app. Flow sends nothing off the device."),
+         "Tap Scribe in that same list and turn on Allow Full Access. The keyboard needs it to reach the shared container it uses to talk to this app. Scribe sends nothing off the device."),
         ("mic", "Grant the microphone",
-         "Start a Flow session on the previous screen and allow microphone access when asked."),
+         "Start a Scribe session on the previous screen and allow microphone access when asked."),
         ("arrow.right.circle", "Dictate anywhere",
-         "In any app, hold the globe key and pick Flow, then tap the microphone. Tap again to stop and the cleaned-up text is inserted."),
+         "In any app, hold the globe key and pick Scribe, then tap the microphone. Tap again to stop and the cleaned-up text is inserted."),
     ]
 
     var body: some View {
@@ -37,7 +37,7 @@ struct OnboardingView: View {
                 }
             }
         }
-        .navigationTitle("Set up Flow")
+        .navigationTitle("Set up Scribe")
         .navigationBarTitleDisplayMode(.inline)
     }
 }

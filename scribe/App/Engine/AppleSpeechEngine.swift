@@ -120,7 +120,7 @@ actor AppleSpeechEngine: TranscriptionEngine {
                     await self?.apply(text: text, isFinal: result.isFinal)
                 }
             } catch {
-                NSLog("[Flow] transcriber results ended: \(error)")
+                NSLog("[Scribe] transcriber results ended: \(error)")
             }
             await self?.closeUpdates()
         }

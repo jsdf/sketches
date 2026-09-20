@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Generates FlowClone.xcodeproj from project.yml. Run on a Mac with Xcode 26 or 27.
+# Generates Scribe.xcodeproj from project.yml. Run on a Mac with Xcode 26 or 27.
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -10,6 +10,6 @@ fi
 
 xcodegen generate
 echo
-echo "Generated FlowClone.xcodeproj"
+echo "Generated Scribe.xcodeproj"
 echo "Next: open it, set your team under Signing & Capabilities for BOTH targets,"
-echo "and replace group.com.example.flowclone with an App Group you own."
+echo "and replace group.co.jsdf.scribe with an App Group you own."

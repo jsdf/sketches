@@ -1,6 +1,6 @@
-name: FlowClone
+name: Scribe
 options:
-  bundleIdPrefix: com.example.flowclone
+  bundleIdPrefix: co.jsdf.scribe
   deploymentTarget:
     iOS: "26.0"
   createIntermediateGroups: true
@@ -19,54 +19,54 @@ settings:
     CURRENT_PROJECT_VERSION: "1"
 
 targets:
-  FlowClone:
+  Scribe:
     type: application
     platform: iOS
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.example.flowclone
+        PRODUCT_BUNDLE_IDENTIFIER: co.jsdf.scribe
     sources:
       - path: App
       - path: Shared
     info:
       path: Support/App-Info.plist
       properties:
-        CFBundleDisplayName: Flow
+        CFBundleDisplayName: Scribe
         UILaunchScreen: {}
         UIBackgroundModes: [audio]
-        NSMicrophoneUsageDescription: Flow needs the microphone so you can dictate into any app from the Flow keyboard.
-        NSSpeechRecognitionUsageDescription: Flow transcribes your speech on device to turn it into text.
+        NSMicrophoneUsageDescription: Scribe needs the microphone so you can dictate into any app from the Scribe keyboard.
+        NSSpeechRecognitionUsageDescription: Scribe transcribes your speech on device to turn it into text.
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
         CFBundleURLTypes:
-          - CFBundleURLName: com.example.flowclone
-            CFBundleURLSchemes: [flowclone]
+          - CFBundleURLName: co.jsdf.scribe
+            CFBundleURLSchemes: [scribe]
     entitlements:
-      path: Support/FlowClone.entitlements
+      path: Support/Scribe.entitlements
       properties:
         com.apple.security.application-groups:
-          - group.com.example.flowclone
+          - group.co.jsdf.scribe
     dependencies:
-      - target: FlowKeyboard
+      - target: ScribeKeyboard
     scheme:
       testTargets: []
 
-  FlowKeyboard:
+  ScribeKeyboard:
     type: app-extension
     platform: iOS
     settings:
       base:
         # Must be nested under the containing app's identifier or the build is rejected.
-        PRODUCT_BUNDLE_IDENTIFIER: com.example.flowclone.keyboard
+        PRODUCT_BUNDLE_IDENTIFIER: co.jsdf.scribe.keyboard
     sources:
       - path: Keyboard
       - path: Shared
     info:
       path: Support/Keyboard-Info.plist
       properties:
-        CFBundleDisplayName: Flow
+        CFBundleDisplayName: Scribe
         NSExtension:
           NSExtensionPointIdentifier: com.apple.keyboard-service
           NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).KeyboardViewController
@@ -78,7 +78,7 @@ targets:
             # keyboard uses to talk to the host app). Without it, dictation cannot work.
             RequestsOpenAccess: true
     entitlements:
-      path: Support/FlowKeyboard.entitlements
+      path: Support/ScribeKeyboard.entitlements
       properties:
         com.apple.security.application-groups:
-          - group.com.example.flowclone
+          - group.co.jsdf.scribe

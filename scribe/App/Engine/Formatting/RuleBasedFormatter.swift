@@ -33,7 +33,7 @@ public struct RuleBasedFormatter: TextFormatter {
     public func format(
         transcript: String,
         request: DictationRequest,
-        settings: FlowSettings
+        settings: ScribeSettings
     ) async throws -> String {
         var text = transcript
 

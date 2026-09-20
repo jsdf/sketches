@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct FlowKeyboardView: View {
+struct ScribeKeyboardView: View {
     let model: KeyboardModel
     let needsInputModeSwitchKey: Bool
     let onKey: (KeyboardKey) -> Void
@@ -46,14 +46,14 @@ struct FlowKeyboardView: View {
         Group {
             switch model.availability {
             case .needsFullAccess:
-                strip("Turn on Allow Full Access for Flow in Settings", systemImage: "lock")
+                strip("Turn on Allow Full Access for Scribe in Settings", systemImage: "lock")
             case .needsHostApp:
                 HStack(spacing: 8) {
                     Image(systemName: "exclamationmark.circle")
-                    Text(openAppFailed ? "Open Flow and start a session" : "Flow isn't running")
+                    Text(openAppFailed ? "Open Scribe and start a session" : "Scribe isn't running")
                         .lineLimit(1)
                     Spacer(minLength: 4)
-                    Button("Open Flow") {
+                    Button("Open Scribe") {
                         if !onOpenHostApp() { openAppFailed = true }
                     }
                     .font(.caption.weight(.semibold))
@@ -61,7 +61,7 @@ struct FlowKeyboardView: View {
                 .font(.caption)
                 .padding(.horizontal, 12)
             case .checking:
-                strip("Connecting to Flow…", systemImage: "ellipsis")
+                strip("Connecting to Scribe…", systemImage: "ellipsis")
             case .ready:
                 readyStrip
             }

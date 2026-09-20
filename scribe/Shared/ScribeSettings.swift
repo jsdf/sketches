@@ -32,7 +32,7 @@ public enum TranscriptionBackend: String, Codable, CaseIterable, Sendable {
 }
 
 /// Settings shared by both processes. Written by the app, read by both.
-public struct FlowSettings: Codable, Sendable, Equatable {
+public struct ScribeSettings: Codable, Sendable, Equatable {
     public var backend: TranscriptionBackend = .appleSpeech
     public var style: FormattingStyle = .matchContext
     /// Run the Foundation Models clean-up pass. Off = raw transcript, which is
@@ -52,21 +52,21 @@ public struct FlowSettings: Codable, Sendable, Equatable {
     public var locale: Locale { Locale(identifier: localeIdentifier) }
 }
 
-public enum FlowSettingsStore {
-    private static let key = "flow.settings.v1"
+public enum ScribeSettingsStore {
+    private static let key = "scribe.settings.v1"
 
     private static var defaults: UserDefaults? {
-        UserDefaults(suiteName: FlowGroup.identifier)
+        UserDefaults(suiteName: ScribeGroup.identifier)
     }
 
-    public static func load() -> FlowSettings {
+    public static func load() -> ScribeSettings {
         guard let data = defaults?.data(forKey: key),
-              let decoded = try? JSONDecoder().decode(FlowSettings.self, from: data)
-        else { return FlowSettings() }
+              let decoded = try? JSONDecoder().decode(ScribeSettings.self, from: data)
+        else { return ScribeSettings() }
         return decoded
     }
 
-    public static func save(_ settings: FlowSettings) {
+    public static func save(_ settings: ScribeSettings) {
         guard let data = try? JSONEncoder().encode(settings) else { return }
         defaults?.set(data, forKey: key)
     }

@@ -5,9 +5,9 @@ import Foundation
 /// Both targets must carry the App Group entitlement, and the keyboard must have
 /// "Allow Full Access" enabled by the user — without it the extension is denied
 /// access to the shared container and no dictation is possible.
-public enum FlowGroup {
-    public static let identifier = "group.com.example.flowclone"
-    public static let urlScheme = "flowclone"
+public enum ScribeGroup {
+    public static let identifier = "group.co.jsdf.scribe"
+    public static let urlScheme = "scribe"
 
     /// Shared container used to pass payloads between the two processes.
     /// Darwin notifications carry no payload, so the file is the transport and the
@@ -30,27 +30,27 @@ public enum FlowGroup {
 /// Caveat that drives the whole design: a Darwin notification cannot *launch* or
 /// *resume* a suspended app. The host app has to already be alive (foreground, or
 /// backgrounded with an active audio session) for these to be delivered.
-public enum FlowSignal: String, CaseIterable, Sendable {
+public enum ScribeSignal: String, CaseIterable, Sendable {
     /// Keyboard became visible; host may warm up models.
-    case keyboardDidAppear = "com.example.flowclone.signal.keyboardDidAppear"
+    case keyboardDidAppear = "co.jsdf.scribe.signal.keyboardDidAppear"
     /// Keyboard is asking the host app to begin capturing audio.
-    case startDictation = "com.example.flowclone.signal.startDictation"
+    case startDictation = "co.jsdf.scribe.signal.startDictation"
     /// Keyboard is asking the host to stop capture and produce a final result.
-    case stopDictation = "com.example.flowclone.signal.stopDictation"
+    case stopDictation = "co.jsdf.scribe.signal.stopDictation"
     /// Keyboard is discarding this dictation.
-    case cancelDictation = "com.example.flowclone.signal.cancelDictation"
+    case cancelDictation = "co.jsdf.scribe.signal.cancelDictation"
     /// Host app published a new `HostState` for the keyboard to read.
-    case hostStateDidChange = "com.example.flowclone.signal.hostStateDidChange"
+    case hostStateDidChange = "co.jsdf.scribe.signal.hostStateDidChange"
     /// Host app is alive and listening (broadcast on launch and on foreground).
-    case hostDidBecomeReady = "com.example.flowclone.signal.hostDidBecomeReady"
+    case hostDidBecomeReady = "co.jsdf.scribe.signal.hostDidBecomeReady"
 }
 
 /// Thin wrapper over the Darwin notification centre.
 ///
 /// The C callback is a bare function pointer and cannot capture context, so
 /// observers live in a process-wide registry keyed by signal name.
-public final class FlowSignalBus: @unchecked Sendable {
-    public static let shared = FlowSignalBus()
+public final class ScribeSignalBus: @unchecked Sendable {
+    public static let shared = ScribeSignalBus()
 
     private let lock = NSLock()
     private var handlers: [String: [UUID: @Sendable () -> Void]] = [:]
@@ -58,7 +58,7 @@ public final class FlowSignalBus: @unchecked Sendable {
 
     private init() {}
 
-    public func post(_ signal: FlowSignal) {
+    public func post(_ signal: ScribeSignal) {
         CFNotificationCenterPostNotification(
             CFNotificationCenterGetDarwinNotifyCenter(),
             CFNotificationName(signal.rawValue as CFString),
@@ -68,7 +68,7 @@ public final class FlowSignalBus: @unchecked Sendable {
 
     /// Returns a token; call `removeObserver(_:)` to stop listening.
     @discardableResult
-    public func observe(_ signal: FlowSignal, _ handler: @escaping @Sendable () -> Void) -> UUID {
+    public func observe(_ signal: ScribeSignal, _ handler: @escaping @Sendable () -> Void) -> UUID {
         let token = UUID()
         lock.lock()
         handlers[signal.rawValue, default: [:]][token] = handler
@@ -82,7 +82,7 @@ public final class FlowSignalBus: @unchecked Sendable {
                 Unmanaged.passUnretained(self).toOpaque(),
                 { _, _, name, _, _ in
                     guard let name else { return }
-                    FlowSignalBus.shared.dispatch(name.rawValue as String)
+                    ScribeSignalBus.shared.dispatch(name.rawValue as String)
                 },
                 signal.rawValue as CFString,
                 nil,
@@ -208,7 +208,7 @@ public struct HostState: Codable, Sendable {
 /// `UserDefaults(suiteName:)` is the more common choice here but it caches across
 /// processes and can hand the keyboard a stale value; writing a file and ringing the
 /// Darwin doorbell is the version that actually stays in sync.
-public enum FlowStore {
+public enum ScribeStore {
     private static let requestFile = "request.json"
     private static let stateFile = "state.json"
 
@@ -225,17 +225,17 @@ public enum FlowStore {
     }()
 
     private static func write<T: Encodable>(_ value: T, to name: String) {
-        guard let url = FlowGroup.fileURL(name) else { return }
+        guard let url = ScribeGroup.fileURL(name) else { return }
         do {
             let data = try encoder.encode(value)
             try data.write(to: url, options: .atomic)
         } catch {
-            NSLog("[Flow] failed to write \(name): \(error)")
+            NSLog("[Scribe] failed to write \(name): \(error)")
         }
     }
 
     private static func read<T: Decodable>(_ type: T.Type, from name: String) -> T? {
-        guard let url = FlowGroup.fileURL(name),
+        guard let url = ScribeGroup.fileURL(name),
               let data = try? Data(contentsOf: url) else { return nil }
         return try? decoder.decode(type, from: data)
     }

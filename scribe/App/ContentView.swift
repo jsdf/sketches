@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ContentView: View {
-    @Environment(FlowHost.self) private var host
+    @Environment(ScribeHost.self) private var host
     @State private var showingSettings = false
 
     var body: some View {
@@ -11,7 +11,7 @@ struct ContentView: View {
                 setupSection
                 if !host.history.isEmpty { historySection }
             }
-            .navigationTitle("Flow")
+            .navigationTitle("Scribe")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { showingSettings = true } label: { Image(systemName: "gearshape") }
@@ -36,12 +36,12 @@ struct ContentView: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
 
-                Button(host.sessionState == .stopped ? "Start Flow session" : "End Flow session") {
+                Button(host.sessionState == .stopped ? "Start Scribe session" : "End Scribe session") {
                     Task {
                         if host.sessionState == .stopped {
-                            await host.startFlowSession()
+                            await host.startSession()
                         } else {
-                            await host.endFlowSession()
+                            await host.endSession()
                         }
                     }
                 }
@@ -57,7 +57,7 @@ struct ContentView: View {
                     .foregroundStyle(.orange)
             }
         } footer: {
-            Text("A Flow session keeps Flow listening in the background so the keyboard can start dictation in other apps. iOS shows the orange microphone indicator the whole time. End the session when you're done.")
+            Text("A Scribe session keeps Scribe listening in the background so the keyboard can start dictation in other apps. iOS shows the orange microphone indicator the whole time. End the session when you're done.")
         }
     }
 
@@ -108,9 +108,9 @@ struct ContentView: View {
     private var statusDetail: String {
         switch host.sessionState {
         case .stopped:
-            "Start a session before using the mic on the Flow keyboard."
+            "Start a session before using the mic on the Scribe keyboard."
         case .ready:
-            "Switch to any app, bring up the Flow keyboard, and tap the microphone."
+            "Switch to any app, bring up the Scribe keyboard, and tap the microphone."
         case .dictating:
             host.volatileTranscript.isEmpty ? host.transcript : host.transcript + host.volatileTranscript
         }

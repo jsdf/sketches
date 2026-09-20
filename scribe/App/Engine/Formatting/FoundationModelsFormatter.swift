@@ -20,11 +20,11 @@ public struct FoundationModelsFormatter: TextFormatter {
         case .available:
             return nil
         case .unavailable(.deviceNotEligible):
-            return "This device doesn't support Apple Intelligence. Flow will use rule-based clean-up instead."
+            return "This device doesn't support Apple Intelligence. Scribe will use rule-based clean-up instead."
         case .unavailable(.appleIntelligenceNotEnabled):
             return "Turn on Apple Intelligence in Settings to get model-based clean-up."
         case .unavailable(.modelNotReady):
-            return "The system model is still downloading. Flow will use rule-based clean-up until it's ready."
+            return "The system model is still downloading. Scribe will use rule-based clean-up until it's ready."
         case .unavailable(let other):
             return "The system model is unavailable (\(other))."
         @unknown default:
@@ -44,7 +44,7 @@ public struct FoundationModelsFormatter: TextFormatter {
     public static func prewarm() {
         guard isAvailable else { return }
         let session = LanguageModelSession(instructions: FormattingPrompt.insertInstructions(
-            settings: FlowSettings(), context: DictationContext()
+            settings: ScribeSettings(), context: DictationContext()
         ))
         session.prewarm()
     }
@@ -52,7 +52,7 @@ public struct FoundationModelsFormatter: TextFormatter {
     public func format(
         transcript: String,
         request: DictationRequest,
-        settings: FlowSettings
+        settings: ScribeSettings
     ) async throws -> String {
         let trimmed = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return "" }
@@ -86,7 +86,7 @@ public struct FoundationModelsFormatter: TextFormatter {
             // rather than by what the user said), then give up and insert what they
             // actually dictated. Losing the user's words to a formatting failure is the
             // one outcome that is never acceptable.
-            NSLog("[Flow] formatting pass failed (\(error)); retrying without context")
+            NSLog("[Scribe] formatting pass failed (\(error)); retrying without context")
             let bare = LanguageModelSession(
                 instructions: FormattingPrompt.insertInstructions(settings: settings, context: DictationContext())
             )

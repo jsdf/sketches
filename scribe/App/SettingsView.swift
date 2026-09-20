@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @Environment(FlowHost.self) private var host
+    @Environment(ScribeHost.self) private var host
     @Environment(\.dismiss) private var dismiss
     @State private var newWord = ""
 
@@ -51,7 +51,7 @@ struct SettingsView: View {
             } header: {
                 Text("Dictionary")
             } footer: {
-                Text("Names, jargon, and product names that get transcribed wrong. Flow uses these to repair the transcript before inserting it.")
+                Text("Names, jargon, and product names that get transcribed wrong. Scribe uses these to repair the transcript before inserting it.")
             }
 
             Section("Keyboard") {

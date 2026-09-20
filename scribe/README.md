@@ -1,4 +1,4 @@
-# Flow — a Wispr Flow-style dictation keyboard, fully on device
+# Scribe — a Wispr Flow-style dictation keyboard, fully on device
 
 A custom iOS keyboard that turns speech into text that reads like you typed it:
 transcription with Apple's on-device speech model, then a clean-up pass through the
@@ -21,7 +21,7 @@ uses — splits the job across two processes:
 
 ```
 ┌─────────────────────────┐                      ┌──────────────────────────────┐
-│  FlowKeyboard           │   Darwin notifs      │  FlowClone (containing app)  │
+│  ScribeKeyboard         │   Darwin notifs      │  Scribe (containing app)     │
 │  (keyboard extension)   │ ───────────────────► │                              │
 │                         │                      │   AudioCapture               │
 │  • mic button, waveform │   App Group          │   AppleSpeechEngine          │
@@ -44,17 +44,17 @@ daemons anyway, so our own footprint stays small.
 ### The cost of this design, stated plainly
 
 - **The app has to be running.** A Darwin notification cannot wake a suspended process.
-  The user starts a "Flow session" in the app, which activates an audio session and,
+  The user starts a "Scribe session" in the app, which activates an audio session and,
   with the `audio` background mode, keeps the app resident after they switch away.
 - **The orange mic indicator stays lit** for the whole session. That is iOS telling the
   truth about what's happening, and the UI says so rather than hiding it.
 - **iOS will eventually reclaim the app.** When it does, the keyboard's liveness probe
-  times out and it shows "Open Flow" instead of a dead mic button.
+  times out and it shows "Open Scribe" instead of a dead mic button.
 - **Opening the app from the keyboard is on thin ice.** Keyboards have no
   `UIApplication` and `NSExtensionContext.open(_:)` isn't honoured for this extension
   point, so `KeyboardViewController.openHostApp()` walks the responder chain looking for
   `openURL:`. That is undocumented, Apple has narrowed it before, and the code treats
-  failure as normal — it falls back to telling the user to open Flow themselves.
+  failure as normal — it falls back to telling the user to open Scribe themselves.
   Wispr Flow appears to have hit the same wall: their docs note that on iOS 26.4+,
   tapping the mic may bounce you into their app.
 
@@ -66,13 +66,13 @@ into and copy out of.
 
 | | |
 |---|---|
-| `Shared/FlowIPC.swift` | Darwin notification bus, shared-container payloads, the message types |
-| `Shared/FlowSettings.swift` | Settings both processes read |
+| `Shared/ScribeIPC.swift` | Darwin notification bus, shared-container payloads, the message types |
+| `Shared/ScribeSettings.swift` | Settings both processes read |
 | `App/Engine/AudioCapture.swift` | `AVAudioEngine` tap, session keep-alive, level metering |
 | `App/Engine/AppleSpeechEngine.swift` | `SpeechAnalyzer` + `SpeechTranscriber` (iOS 26+) |
 | `App/Engine/WhisperKitEngine.swift` | Optional open-weights path, compiled out unless the package is linked |
 | `App/Engine/Formatting/` | The clean-up pass: Foundation Models, prompts, and a rule-based fallback |
-| `App/Engine/FlowHost.swift` | Orchestrator — owns the session, answers the keyboard |
+| `App/Engine/ScribeHost.swift` | Orchestrator — owns the session, answers the keyboard |
 | `Keyboard/` | The extension: model, view controller, SwiftUI keyboard, QWERTY |
 
 ## Which model?
@@ -120,20 +120,20 @@ Apple Intelligence and the keyboard/mic interaction doesn't reproduce there.
 ```sh
 brew install xcodegen
 ./bootstrap.sh
-open FlowClone.xcodeproj
+open Scribe.xcodeproj
 ```
 
 Then, once:
 
 1. Set your team on **both** targets under Signing & Capabilities.
-2. Replace `group.com.example.flowclone` with an App Group you own — in `project.yml`
-   and in `FlowGroup.identifier` (`Shared/FlowIPC.swift`). Both targets need it.
+2. Replace `group.co.jsdf.scribe` with an App Group you own — in `project.yml`
+   and in `ScribeGroup.identifier` (`Shared/ScribeIPC.swift`). Both targets need it.
 3. Build and run to your device.
-4. In the app: **Start Flow session**, allow the microphone.
-5. Settings → General → Keyboard → Keyboards → Add New Keyboard → Flow, then tap Flow
+4. In the app: **Start Scribe session**, allow the microphone.
+5. Settings → General → Keyboard → Keyboards → Add New Keyboard → Scribe, then tap Scribe
    and enable **Allow Full Access**. Without it the extension can't reach the shared
    container and nothing works.
-6. In any app, hold the globe key, pick Flow, tap the mic.
+6. In any app, hold the globe key, pick Scribe, tap the mic.
 
 `project.yml` targets iOS 26.0 and builds in Swift 5 language mode. Both are
 deliberate: 26.0 is the floor for `SpeechAnalyzer` and `FoundationModels`, and Swift 5
@@ -164,5 +164,5 @@ Specific things to verify on device:
 - [Recording audio from a keyboard extension](https://developer.apple.com/forums/thread/775077) and [Record microphone in a keyboard app](https://developer.apple.com/forums/thread/800500) — what the failure looks like in practice
 - [SpeechAnalyzer](https://developer.apple.com/documentation/speech/speechanalyzer) · [Foundation Models](https://developer.apple.com/documentation/foundationmodels)
 - [FluidInference/swift-scribe](https://github.com/FluidInference/swift-scribe) — working SpeechAnalyzer + Foundation Models reference
-- [Set up the Flow keyboard on iPhone](https://docs.wisprflow.ai/articles/7453988911-set-up-the-flow-keyboard-on-iphone) — Wispr Flow's own setup flow, including the iOS 26.4 app-bounce
+- [Set up the Scribe keyboard on iPhone](https://docs.wisprflow.ai/articles/7453988911-set-up-the-flow-keyboard-on-iphone) — Wispr Flow's own setup flow, including the iOS 26.4 app-bounce
 - [Wispr Flow is an AI iPhone keyboard that transcribes what you say](https://9to5mac.com/2025/06/30/wispr-flow-is-an-ai-that-transcribes-what-you-say-right-from-the-iphone-keyboard/)
